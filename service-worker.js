@@ -1,12 +1,7 @@
-// (★) GitHub Pagesのリポジトリ名 (例: '/my-repo')
-// もし "username.github.io" のようなユーザールートで使うなら、空文字 '' にしてください
 const REPO_PATH = '/manual-search'; 
-
-// (★) キャッシュのバージョン (ここを更新するとキャッシュが新しくなる)
-const CACHE_NAME = 'your-app-cache-v1';
+const CACHE_NAME = 'app-cache-v1';
 
 // (★) アプリ本体として初回にキャッシュするファイル
-// REPO_PATH を先頭につけて、GitHub Pages のパスに合わせます
 const urlsToCache = [
   REPO_PATH + '/',
   REPO_PATH + '/index.html',
@@ -14,7 +9,6 @@ const urlsToCache = [
   REPO_PATH + '/icon-192.png',
   REPO_PATH + '/icon-512.png'
   // (もしCSSやJSを分けていたら、それもここに追加)
-  // REPO_PATH + '/style.css',
 ];
 
 // --- 1. インストール処理 ---
@@ -27,7 +21,7 @@ self.addEventListener('install', event => {
       })
       .catch(err => {
         console.error('Failed to cache files during install:', err);
-        console.log('Files to cache:', urlsToCache); // (★) デバッグ用にログを追加
+        console.log('Files to cache:', urlsToCache); 
       })
   );
 });
