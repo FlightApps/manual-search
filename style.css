@@ -1,0 +1,425 @@
+      body {
+        background-color: #EFEFEF;
+      }
+    
+      #folderFilterContainer {
+        font-size: 16px;
+        position: sticky;
+        top: 54px;
+        height: calc(100vh - 54px);
+        overflow-y: auto;
+      }
+
+      .list-group-item {
+        cursor: pointer;
+        padding-top: 0.2rem;
+        padding-bottom: 0.2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-left: 0.2rem;
+        transition: color 0.2s, font-weight 0.2s;
+        color: #888;
+        font-weight: normal;
+      }
+    
+      .folder-item-active {
+        color: #212529;
+        font-weight: 600;
+      }
+
+      .folder-checkbox-item {
+      }
+      .folder-checkbox-item input {
+        cursor: pointer;
+        vertical-align: middle;
+      }
+      .folder-checkbox-item label {
+        cursor: pointer;
+        vertical-align: middle;
+        display: inline-block;
+        width: auto;
+      }
+    
+      .nested-list-group {
+        padding-left: 0;
+        margin-left: 0;
+        border: none;
+        border-radius: 0;
+      }
+      .nested-list-group .list-group-item {
+        padding-left: 1rem;
+        position: relative;
+      }
+    
+      .badge.rounded-pill {
+        display: none;
+      }
+
+      .folder-toggle {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        position: relative;
+        width: 1.25em;
+        height: 1.25em;
+        flex-shrink: 0;
+      }
+    
+      .folder-toggle::after {
+        content: "";
+        display: inline-block;
+        width: 1.25em;
+        height: 1.25em;
+        line-height: 1;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 1rem;
+        transition: transform .2s ease-in-out;
+      
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        margin: auto 0;
+      }
+    
+      .folder-toggle:not(.collapsed)::after {
+        transform: rotate(-180deg);
+      }
+    
+      .folder-spacer {
+        display: block;
+        width: 1.25em;
+        height: 1.25em;
+        flex-shrink: 0;
+      }
+    
+      .folder-item-left {
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+      }
+
+
+      #loading { display: none; margin-top: 15px; color: #555; }
+    
+      #cacheLoading {
+        display: none;
+        padding: 10px;
+        background-color: #fff8c4;
+        border: 1px solid #f2c700;
+        border-radius: 4px;
+      }
+      #cacheLoading .progress {
+        height: 10px;
+      }
+      #cacheLoadingText {
+        margin-bottom: 8px;
+      }
+
+      #stickyControls {
+        position: relative;
+        top: 54px;
+        z-index: 10;
+        background-color: #EFEFEF;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 15px;
+        display: none;
+        padding-top: 15px;
+        padding-bottom: 15px;
+        max-width: 700px;
+        display: flex;
+        justify-content: space-between; /* 両端に配置 */
+        align-items: center; /* 垂直方向を中央揃え */
+        padding-left: 1rem;  /* 左端の余白 */
+        padding-right: 1rem; /* 右端の余白 */
+      }
+
+      #paginationContainer {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      #paginationContainer .pagination {
+        justify-content: center;
+        margin-bottom: 0;
+        padding-bottom: 0; /* (★) 5px から 0 に修正 (align-items で中央揃えするため) */
+      }
+    
+      #results {
+        max-width: 700px;
+      }
+
+      #resultSummary {
+        font-size: 15px;
+        color: #111;
+        margin-bottom: 0px;
+        font-weight: 600;
+      }
+    
+      #resultList {
+        list-style-type: none;
+        padding-left: 0;
+      }
+    
+      #resultList li {
+        margin-bottom: 15px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        display: flex; 
+        flex-direction: column; /* デフォルトは縦並び */
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      li:hover {
+        background-color: #fcfcfc;
+      }
+    
+      .thumbnail {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 250 / 354; /* A4縦横比を維持 */
+        border: 1px solid #eee;
+        margin-right: 0;
+        margin-bottom: 15px;
+        flex-shrink: 0;
+        background-color: #f0f0f0;
+      
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    
+      .thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .content {
+        flex-grow: 1;
+        min-width: 0;
+        width: 100%;
+      }
+      li a {
+        text-decoration: none;
+        color: #1a0dab;
+      }
+      li a:hover { text-decoration: underline; }
+    
+      .folder {
+        font-size: 13px;
+        color: #006621;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    
+      .snippet {
+        font-size: 16px;
+        color: #333;
+        line-height: 1.5;
+        word-break: break-all;
+        max-height: 315px;
+        overflow: hidden;
+      }
+      .snippet strong {
+        background-color: #fff8c4;
+        font-weight: 600;
+      }
+    
+      .modal-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* デフォルト (スマホ) の設定: 縦積み */
+      .modal-body {
+        text-align: left;
+        padding: 0;
+        overflow-y: auto;
+        flex-grow: 1;
+      }
+
+      .modal-body .container-fluid,
+      .modal-body .container-fluid .row {
+        height: auto;
+      }
+
+      .modal-body .col-md-6 {
+        height: auto;
+        padding: 0;
+      }
+
+      #modalImageContainer {
+        width: 100%;
+        height: 100%;
+        /* (★) 追加: 見開き表示のため Flex にする */
+        display: flex;
+        gap: 1rem;
+        padding: 0.5rem;
+      }
+      
+      /* (★) 追加: 左右のページ共通スタイル */
+      .modal-page {
+        width: 50%;
+        height: 100%;
+        flex-shrink: 0;
+        background-color: #f8f9fa;
+        /* (★) 追加: ページ中央に画像/スピナーを配置 */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      /* (★) 追加: ページ内の画像 */
+      .modal-page img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      
+      /* (★) --- デフォルト（通常モード）のレイアウト --- */
+      
+      /* (★) デフォルトは左ページ(P.2)を非表示 */
+      #modalPageLeft {
+        display: none; 
+      }
+      /* (★) デフォルトは右ページ(P.1)が100%幅 */
+      #modalPageRight {
+        width: 100%;
+      }
+      
+      /* (★) --- 読書モード (modal-reading-mode クラス) --- */
+      
+      /* (★) 読書モード時: OCR列を非表示 */
+      .modal-reading-mode #modalOcrColumn {
+        display: none;
+      }
+      
+      /* (★) 読書モード時: 画像列を 100% 幅にする */
+      .modal-reading-mode #modalImageColumn {
+        max-width: 100%;
+        flex-basis: 100%;
+      }
+
+      /* (★) 読書モード時: 左ページを表示 */
+      .modal-reading-mode #modalPageLeft {
+        display: flex; 
+      }
+      /* (★) 読書モード時: 右ページを 50% 幅に戻す */
+      .modal-reading-mode #modalPageRight {
+        width: 50%;
+      }
+
+      /* (★) 読書モードかつ「横長単一表示」の場合 */
+      .modal-reading-mode.single-landscape #modalPageLeft {
+        display: none; /* 左ページを隠す */
+      }
+      .modal-reading-mode.single-landscape #modalPageRight {
+        width: 100%; /* 右ページを100%幅にする */
+      }
+    
+      #modalOcrText {
+        height: auto;
+        overflow-y: visible;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-left: none;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    
+      #modalOcrText strong {
+          background-color: #fff8c4;
+          font-weight: 600;
+      }
+    
+      /* sm (576px) 以上の設定: 検索結果を横並びに戻す */
+      @media (min-width: 576px) {
+        ul#resultList li {
+          flex-direction: row; /* 横並び */
+        }
+      
+        .thumbnail {
+          width: 250px; /* 固定幅 */
+          height: 354px; /* 固定高 */
+          margin-right: 20px;
+          margin-bottom: 0;
+        }
+      
+        .content {
+            width: auto; 
+        }
+      }
+
+      /* md (768px) 以上の設定: モーダルを横並びに戻す */
+      @media (min-width: 768px) {
+        .modal-body {
+          overflow: hidden;
+        }
+      
+        .modal-body .container-fluid,
+        .modal-body .container-fluid .row {
+          height: 100%;
+        }
+      
+        .modal-body .col-md-6 {
+          height: 100%;
+        }
+      
+        .modal-body .col-md-6:last-child {
+          display: flex;
+          flex-direction: column;
+        }
+    
+        #modalOcrText {
+          height: 100%;
+          overflow-y: auto;
+          border-left: 1px solid #dee2e6;
+          padding: 1rem;
+        }
+      }
+
+      .modal-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        max-width: 90%;
+      }
+    
+      .modal-footer {
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .modal-header {
+        flex-shrink: 0;
+      }
+
+      #modalPageInput::-webkit-outer-spin-button,
+      #modalPageInput::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      #modalPageInput[type=number] {
+        -moz-appearance: textfield; /* Firefox用 */
+      }
+
+      #cacheLoading {
+          position: sticky;
+          top: calc(54px + 1rem);
+          z-index: 20;
+      }
+      #loading {
+          position: sticky;
+          top: calc(54px + 1rem);
+          z-index: 20;
+      }

@@ -1,14 +1,15 @@
 const REPO_PATH = '/manual-search'; 
 const CACHE_NAME = 'app-cache-v1';
+// (★) リポジトリパスの定義
 
-// (★) アプリ本体として初回にキャッシュするファイル
 const urlsToCache = [
   REPO_PATH + '/',
   REPO_PATH + '/index.html',
   REPO_PATH + '/manifest.json',
   REPO_PATH + '/icon-192.png',
-  REPO_PATH + '/icon-512.png'
-  // (もしCSSやJSを分けていたら、それもここに追加)
+  REPO_PATH + '/icon-512.png',
+  REPO_PATH + '/style.css',
+  REPO_PATH + '/script.js'
 ];
 
 // --- 1. インストール処理 ---
