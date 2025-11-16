@@ -1,0 +1,24 @@
+{
+  "name": "manual-search",
+  "short_name": "📖🔍️",
+  "description": "マニュアル全文検索",
+  
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#EFEFEF",
+  "theme_color": "#253746",
+
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
