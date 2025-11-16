@@ -580,6 +580,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
     <script>
+      const GAS_API_URL = "https://script.google.com/a/macros/ana.co.jp/s/AKfycbxQ7l90Qg1vanpbrK3GXR1eaaEpuuYbzQidnkb0T1lNh_ujsQbDq84UrQ9mYeCzo_bx/exec";
+      const REPO_PATH = '/manual-search'; // (例: '/my-search-app')
+
+      
       const dbPromise = idb.openDB('data-cache-db', 10, {
         upgrade(db, oldVersion, newVersion, transaction) {
           console.log(`Upgrading DB from v${oldVersion} to v${newVersion}`);
@@ -3061,22 +3065,21 @@
         }
       });
       
+      
+      const swPath = (REPO_PATH || '') + '/service-worker.js';
 
-    const repoPath = '/manual-search';
-    const swPath = (repoPath || '') + '/service-worker.js';
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register(swPath) // (★) パスを修正
-          .then(registration => {
-            console.log('ServiceWorker registered with scope: ', registration.scope);
-          })
-          .catch(registrationError => {
-            console.log('ServiceWorker registration failed: ', registrationError);
-          });
-      });
-    }
-    </script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register(swPath)
+            .then(registration => {
+              console.log('ServiceWorker registered with scope: ', registration.scope);
+            })
+            .catch(registrationError => {
+              console.log('ServiceWorker registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
 
   </body>
 </html>
