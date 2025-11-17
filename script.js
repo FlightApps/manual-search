@@ -708,7 +708,7 @@
           // (★) 修正: fetch を使った POST リクエストに変更
             fetch(GAS_API_URL, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'text/plain' },
               body: JSON.stringify({
                 action: 'getDataForFolders', // doPost で判別するためのキー
                 folders: foldersToFetch      // 送信するフォルダ配列
@@ -1678,7 +1678,7 @@
         // 4. サーバーにこのチャンクのデータを要求
         fetch(GAS_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
             action: 'getThumbnails', // doPostで判別
             ids: chunkArray           // 送信するID
