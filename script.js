@@ -363,7 +363,9 @@
             const localVersion = await db.get('keyval', 'masterVersion');
             
             // 3. サーバーから最新の "InitialData" (version含む) を fetch
-            const initialDataResponse = await fetch(GAS_API_URL + "?action=getInitialData");
+            const initialDataResponse = await fetch(GAS_API_URL + "?action=getInitialData", {
+                credentials: 'include'
+            });
             if (!initialDataResponse.ok) {
               throw new Error('Failed to fetch initial data: ' + initialDataResponse.statusText);
             }
@@ -712,7 +714,8 @@
               body: JSON.stringify({
                 action: 'getDataForFolders', // doPost で判別するためのキー
                 folders: foldersToFetch      // 送信するフォルダ配列
-              })
+              }),
+              credentials: 'include'
             })
             .then(res => {
               if (!res.ok) throw new Error("API request failed");
@@ -1682,7 +1685,8 @@
           body: JSON.stringify({
             action: 'getThumbnails', // doPostで判別
             ids: chunkArray           // 送信するID
-          })
+          }),
+          credentials: 'include'
         })
         .then(res => {
           if (!res.ok) throw new Error("API request failed");
