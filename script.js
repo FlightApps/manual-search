@@ -1,28 +1,83 @@
       const GAS_API_URL = "https://script.google.com/a/macros/ana.co.jp/s/AKfycbxQ7l90Qg1vanpbrK3GXR1eaaEpuuYbzQidnkb0T1lNh_ujsQbDq84UrQ9mYeCzo_bx/exec";
       const REPO_PATH = '/manual-search'; // (例: '/my-search-app');
       
+      // メッセージのやり取りを管理する変数
+      let gasIframe = null;
+      let gasIframeWindow = null;
+      let isBridgeLoaded = false;
+      const pendingRequests = new Map();
+
+      /**
+       * 1. 起動時に見えないiframeを作成してGASを読み込む
+       */
+      function initGasBridge() {
+        return new Promise((resolve, reject) => {
+          if (gasIframe) return resolve(); // 既に作成済み
+
+          gasIframe = document.createElement('iframe');
+          gasIframe.src = GAS_API_URL;
+          gasIframe.style.display = "none"; // 非表示にする
+          gasIframe.id = "gas-bridge-frame";
+          document.body.appendChild(gasIframe);
+
+          // GASからの応答を受け取るリスナー
+          window.addEventListener('message', (event) => {
+            // GASのドメインからのメッセージか確認（簡易チェック）
+            if (!event.origin.includes('script.googleusercontent.com')) return;
+
+            const data = event.data;
+            
+            // (A) ブリッジ読み込み完了通知
+            if (data.type === 'bridgeLoaded') {
+              console.log("GAS Bridge Loaded!");
+              isBridgeLoaded = true;
+              gasIframeWindow = gasIframe.contentWindow;
+              resolve();
+              return;
+            }
+
+            // (B) APIリクエストへの応答
+            if (data.reqId && pendingRequests.has(data.reqId)) {
+              const { resolve: reqResolve, reject: reqReject } = pendingRequests.get(data.reqId);
+              pendingRequests.delete(data.reqId);
+
+              if (data.success) {
+                reqResolve(data.data);
+              } else {
+                reqReject(new Error(data.error));
+              }
+            }
+          });
+          
+          // タイムアウト処理（任意）
+          setTimeout(() => {
+            if (!isBridgeLoaded) reject(new Error("GAS Bridge connection timed out. Login required?"));
+          }, 15000); // 15秒待機
+        });
+      }
+
+      /**
+       * 2. callGasApi の書き換え (Iframe経由)
+       */
       async function callGasApi(actionName, payloadData = null) {
-        const options = {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" }, // CORS回避の鍵
-          body: JSON.stringify({
+        // ブリッジが未ロードならロードする
+        if (!isBridgeLoaded) {
+          await initGasBridge();
+        }
+
+        return new Promise((resolve, reject) => {
+          const reqId = Date.now() + Math.random().toString();
+          
+          // 応答待ちリストに登録
+          pendingRequests.set(reqId, { resolve, reject });
+
+          // GAS(Iframe)へメッセージ送信
+          gasIframeWindow.postMessage({
             action: actionName,
-            payload: payloadData
-          }),
-          redirect: "follow"
-        };
-
-        const response = await fetch(GAS_API_URL, options);
-
-        if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-        }
-
-        const json = await response.json();
-        if (json.error) {
-          throw new Error(json.error);
-        }
-        return json;
+            payload: payloadData,
+            reqId: reqId
+          }, "*"); // GASの正確なOriginが動的なため "*" だが、reqIdで整合性を保つ
+        });
       }
       
       const dbPromise = idb.openDB('data-cache-db', 10, {
@@ -383,6 +438,12 @@
             if (cacheLoadingEl) cacheLoadingEl.style.display = 'block';
             AppState.cacheLoadingText.textContent = '更新を確認中...';
             AppState.targetProgress = 5;
+            
+            // ★ここが変わります：まずGASとの接続（Iframe）を確立
+            // これにより、裏でANAの認証済みセッションを使ってGASがロードされます
+            await initGasBridge();
+            
+            AppState.cacheLoadingText.textContent = '更新を確認中...';
 
             // 2. データベースを準備
             const db = await dbPromise;
