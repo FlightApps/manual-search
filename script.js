@@ -9,7 +9,6 @@
             action: actionName,
             payload: payloadData
           }),
-          credentials: 'include', // ANAドメイン内の場合、認証クッキー送信に必須の可能性大
           redirect: "follow"
         };
 
