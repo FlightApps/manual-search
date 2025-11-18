@@ -1,6 +1,30 @@
       const GAS_API_URL = "https://script.google.com/a/macros/ana.co.jp/s/AKfycbxQ7l90Qg1vanpbrK3GXR1eaaEpuuYbzQidnkb0T1lNh_ujsQbDq84UrQ9mYeCzo_bx/exec";
-      const REPO_PATH = '/manual-search'; // (例: '/my-search-app')
+      const REPO_PATH = '/manual-search'; // (例: '/my-search-app');
+      
+      async function callGasApi(actionName, payloadData = null) {
+        const options = {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" }, // CORS回避の鍵
+          body: JSON.stringify({
+            action: actionName,
+            payload: payloadData
+          }),
+          credentials: 'include', // ANAドメイン内の場合、認証クッキー送信に必須の可能性大
+          redirect: "follow"
+        };
 
+        const response = await fetch(GAS_API_URL, options);
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+        }
+
+        const json = await response.json();
+        if (json.error) {
+          throw new Error(json.error);
+        }
+        return json;
+      }
       
       const dbPromise = idb.openDB('data-cache-db', 10, {
         upgrade(db, oldVersion, newVersion, transaction) {
@@ -85,6 +109,9 @@
       const MAX_RECENT_SEARCHES = 10;
       const ITEMS_PER_PAGE =50;
 
+
+
+      
       // ヘルパー関数群
       function escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -363,13 +390,7 @@
             const localVersion = await db.get('keyval', 'masterVersion');
             
             // 3. サーバーから最新の "InitialData" (version含む) を fetch
-            const initialDataResponse = await fetch(GAS_API_URL + "?action=getInitialData", {
-                credentials: 'include'
-            });
-            if (!initialDataResponse.ok) {
-              throw new Error('Failed to fetch initial data: ' + initialDataResponse.statusText);
-            }
-            const initialData = await initialDataResponse.json();
+            const initialData = await callGasApi('getInitialData');
             
             // 4. 取得したデータからサーバーバージョンを抜き出す
             const serverVersion = initialData.version; // (★) GASから 'version' を受け取る
@@ -678,6 +699,7 @@
 
         if (foldersToFetch.length > 0) {
           
+          // プログレスバーのシミュレーション関数
           function runSimulation() {
             const totalFolders = foldersToFetch.length;
             const estimatedTime = 500 + (totalFolders * 400);
@@ -707,22 +729,11 @@
             simulate();
           }
 
-          // (★) 修正: fetch を使った POST リクエストに変更
-            fetch(GAS_API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain' },
-              body: JSON.stringify({
-                action: 'getDataForFolders', // doPost で判別するためのキー
-                folders: foldersToFetch      // 送信するフォルダ配列
-              }),
-              credentials: 'include'
-            })
-            .then(res => {
-              if (!res.ok) throw new Error("API request failed");
-              return res.json();
-            })
-            .then(async (changedData) => { // (★) withSuccessHandler と同じ
-                
+          // ▼▼▼▼▼▼▼▼▼▼ 修正箇所: callGasApi を使用してリクエスト ▼▼▼▼▼▼▼▼▼▼
+          callGasApi('getDataForFolders', foldersToFetch)
+            .then(async (changedData) => {
+              
+              // シミュレーションタイマーの停止
               if (AppState.simulationTimer) {
                 clearTimeout(AppState.simulationTimer);
                 AppState.simulationTimer = null;
@@ -741,6 +752,7 @@
               
               let tx;
               try {
+                const db = await dbPromise;
                 const masterData = await db.get('keyval', 'folderMaster'); 
                 if (!masterData) {
                   throw new Error("フォルダ辞書(masterData)がDBから取得できませんでした。");
@@ -757,17 +769,19 @@
                 
                 let i = 0;
                 
+                // 削除対象フォルダの処理
                 if (foldersToDelete.length > 0) {
                    AppState.cacheLoadingText.textContent = `古いデータ(${foldersToDelete.length}件)を削除中...`;
                    const pathIndex = fileStore.index('byPath');
                    for (const folderName of foldersToDelete) {
-                   const filesToDelete = await pathIndex.getAll(folderName);
+                     const filesToDelete = await pathIndex.getAll(folderName);
                      for (const file of filesToDelete) {
                        await fileStore.delete(file.id); 
                      }
                    }
                 }
 
+                // 新規データの保存処理
                 for (const folderName in changedData) {
                   i++;
                   const shortName = getLastName(folderName);
@@ -784,7 +798,7 @@
                     if (path !== undefined) {
                       const fileObject = {
                         path: path, name: row_4col[0], id: row_4col[1], ocr: row_4col[2], folderId: folderId
-                    };
+                      };
                       await fileStore.put(fileObject);
                     } else {
                       console.warn(`パスが見つかりません: FolderID=${folderId}, Name=${row_4col[0]}`);
@@ -803,8 +817,8 @@
               }
               await loadDataFromDBAndSetupUI();
             })
-            .catch(onDataLoadError); // (★) withFailureHandler と同じ
-
+            .catch(onDataLoadError);
+            // ▲▲▲▲▲▲▲▲▲▲ 修正ここまで ▲▲▲▲▲▲▲▲▲▲
 
           runSimulation(); 
 
@@ -1638,12 +1652,6 @@
         }
       }
 
-      // (★) ↓↓↓ 既存のダウンロード関数をすべて削除し、以下の5つに置き換え ↓↓↓
-
-      /**
-       * (新) 唯一のダウンロードワーカー。
-       * 並列数に空きがあり、キューにIDが残っていれば、次のチャンクの取得を開始する。
-       */
       function processDownloadQueue() {
         const manager = AppState.downloadManager;
         
@@ -1661,7 +1669,7 @@
             const next = iterator.next();
             if (next.done) break;
             const id = next.value;
-            // (★) 既にメモリキャッシュにあるIDはスキップ (DB保存後など)
+            // 既にメモリキャッシュにあるIDはスキップ (DB保存後など)
             if (!AppState.thumbnailCache[id]) {
                 chunkArray.push(id);
             }
@@ -1671,33 +1679,22 @@
         if (chunkArray.length === 0) {
             // チャンクが空だった場合 (要求がすべてキャッシュ済みだった)
             manager.inFlightRequests--;
-            // (★) 次のキューを試す
+            // 次のキューを試す
             setTimeout(processDownloadQueue, 5);
             return;
         }
 
         console.log(`Download worker starting. In-flight: ${manager.inFlightRequests}. Fetching ${chunkArray.length} IDs. Remaining: ${manager.idsToFetch.size}`);
 
-        // 4. サーバーにこのチャンクのデータを要求
-        fetch(GAS_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({
-            action: 'getThumbnails', // doPostで判別
-            ids: chunkArray           // 送信するID
-          }),
-          credentials: 'include'
-        })
-        .then(res => {
-          if (!res.ok) throw new Error("API request failed");
-          return res.json();
-        })
-        .then(thumbnailMap => { // 成功時
-          onDownloadChunkLoaded(thumbnailMap, chunkArray);
-        })
-        .catch(error => { // 失敗時
-          onDownloadChunkLoaded(error, chunkArray);
-        });
+        callGasApi('getThumbnails', chunkArray)
+          .then(thumbnailMap => {
+             // 成功時の処理
+             onDownloadChunkLoaded(thumbnailMap, chunkArray); 
+          })
+          .catch(error => {
+             // 失敗時の処理
+             onDownloadChunkFailed(error, chunkArray);
+          });
       }
 
       function onDownloadChunkLoaded(thumbnailMap, requestedChunkArray) {
